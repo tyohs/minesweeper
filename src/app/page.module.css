@@ -9,20 +9,21 @@
 }
 
 .board {
-  display: flex;
-  flex-wrap: wrap;
-  width: 300px;
-  height: 300px;
+  display: grid;
+  grid-template-columns: repeat(9, 24px);
+  padding: 5px;
   background-color: #c0c0c0;
-  border-color: #7b7b7b #fff #fff #7b7b7b;
+  border: 3px solid;
+  border-color: #808080 #fff #fff #808080;
 }
 
 .cell {
-  width: 32px;
-  height: 32px;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
   background-color: #c0c0c0;
-  border: 1px solid;
-  border-color: #f0f0f0 #808080 #808080 #f0f0f0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
 }
 
 .bomb {
@@ -36,8 +37,8 @@
 }
 
 .sampleCell {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   background: url('~/src/assets/images/icons.png') no-repeat;
   border: 1px solid #000;
 }
