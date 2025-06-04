@@ -76,7 +76,7 @@ export default function Home() {
       const y = Math.floor(Math.random() * 9);
       const x = Math.floor(Math.random() * 9);
       if (bombMap[y][x] === 0) {
-        newBombMap[y][x] = 11;
+        newBombMap[y][x] = 10;
         bombCounter++;
       }
     }
@@ -85,32 +85,38 @@ export default function Home() {
   const clickHandler = (x: number, y: number) => {
     console.log(x, y);
     const newUserInputs = structuredClone(userInputs);
-    newUserInputs[y][x] = 1;
-    setUserInputs(newUserInputs);
+    let currentBombMap = bombMap;
     if (!gameStarted) {
-      setBombMap(bombRandom());
+      const generatedBombMap = bombRandom();
+      setBombMap(generatedBombMap);
+      currentBombMap = generatedBombMap;
       setGameStarted(true);
     }
+    if (currentBombMap[y][x] === 10) {
+      newUserInputs[y][x] = 10;
+      console.log('ボム');
+    } else {
+      newUserInputs[y][x] = 1;
+    }
+    setUserInputs(newUserInputs);
   };
-
   return (
     <div className={styles.container}>
       {/* <div className={styles.sampleCell} style={{ backgroundPosition: sampleCounter * -30 }} /> */}
-      <div className={styles.flame}>
-        <div className={styles.board}>
-          {board.map((row, y) =>
-            row.map((value, x) => (
-              <div className={styles.cell} key={`${x}-${y}`} onClick={() => clickHandler(x, y)}>
-                {userInputs[y][x] === 1 && (
-                  <div
-                    className={styles.sampleCell}
-                    style={{ backgroundPosition: sampleCounter * -30 }}
-                  />
-                )}
-              </div>
-            )),
-          )}
-        </div>
+      <div className={styles.board}>
+        {board.map((row, y) =>
+          row.map((value, x) => (
+            <div className={styles.cell} key={`${x}-${y}`} onClick={() => clickHandler(x, y)}>
+              {userInputs[y][x] === 10 && (
+                <div
+                  className={styles.sampleCell}
+                  style={{ backgroundPosition: userInputs[y][x] * -30 }}
+                />
+              )}
+              {userInputs[y][x] === 1 && <div className={styles.openCell} />}
+            </div>
+          )),
+        )}
       </div>
     </div>
   );
