@@ -36,29 +36,7 @@ import styles from './page.module.css';
 // console.log(sum3(4, 10));
 export default function Home() {
   const [sampleCounter, setSampleCounter] = useState(0);
-  const [board, setBoard] = useState([
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  ]);
-  const [userInputs, setUserInputs] = useState([
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  ]);
-  const bombMap = [
+  const board = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -69,6 +47,9 @@ export default function Home() {
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
   ];
+  const [bombMap, setBombMap] = useState(board);
+  const [userInputs, setUserInputs] = useState(board);
+  const [gameStarted, setGameStarted] = useState(false);
   const directions = [
     [-1, 0],
     [-1, 1],
@@ -84,30 +65,31 @@ export default function Home() {
   // console.log('samplePoints=', samplePoints);
   // const totalPoint = calcTotalPoint(samplePoints, sampleCounter);
   // console.log('totalPoint=', totalPoint);
-  let clickCount = 0;
+  // setSampleCounter((sampleCounter + 1) % 14);
+  // const newSamplePoints = structuredClone(samplePoints);
+  // newSamplePoints[sampleCounter] += 1;
+  // setSamplePoints(newSamplePoints);
+  const bombRandom = () => {
+    let bombCounter = 0;
+    const newBombMap = structuredClone(bombMap);
+    while (bombCounter < 10) {
+      const y = Math.floor(Math.random() * 9);
+      const x = Math.floor(Math.random() * 9);
+      if (bombMap[y][x] === 0) {
+        newBombMap[y][x] = 11;
+        bombCounter++;
+      }
+    }
+    return newBombMap;
+  };
   const clickHandler = (x: number, y: number) => {
     console.log(x, y);
     const newUserInputs = structuredClone(userInputs);
     newUserInputs[y][x] = 1;
     setUserInputs(newUserInputs);
-    if (clickCount === 0) {
-      bombRandom();
-      clickCount += 1;
-    }
-    // setSampleCounter((sampleCounter + 1) % 14);
-    // const newSamplePoints = structuredClone(samplePoints);
-    // newSamplePoints[sampleCounter] += 1;
-    // setSamplePoints(newSamplePoints);
-  };
-  const bombRandom = () => {
-    let bombCounter = 0;
-    while (bombCounter < 10) {
-      const y = Math.floor(Math.random() * 9);
-      const x = Math.floor(Math.random() * 9);
-      if (bombMap[y][x] === 0) {
-        bombMap[y][x] = 11;
-        bombCounter++;
-      }
+    if (!gameStarted) {
+      setBombMap(bombRandom());
+      setGameStarted(true);
     }
   };
 
