@@ -96,7 +96,20 @@ export default function Home() {
       newUserInputs[y][x] = 10;
       console.log('ボム');
     } else {
-      newUserInputs[y][x] = 1;
+      newUserInputs[y][x] = -1;
+    }
+    setUserInputs(newUserInputs);
+  };
+  const handleRightClick = (e: React.MouseEvent, x: number, y: number) => {
+    e.preventDefault();
+    if (userInputs[y][x] === -1 || userInputs[y][x] === 11) {
+      return;
+    }
+    const newUserInputs = structuredClone(userInputs);
+    if (newUserInputs[y][x] === 0) {
+      newUserInputs[y][x] = 9;
+    } else if (newUserInputs[y][x] === 9) {
+      newUserInputs[y][x] = 0;
     }
     setUserInputs(newUserInputs);
   };
@@ -106,14 +119,25 @@ export default function Home() {
       <div className={styles.board}>
         {board.map((row, y) =>
           row.map((value, x) => (
-            <div className={styles.cell} key={`${x}-${y}`} onClick={() => clickHandler(x, y)}>
+            <div
+              className={styles.cell}
+              key={`${x}-${y}`}
+              onClick={() => clickHandler(x, y)}
+              onContextMenu={(e) => handleRightClick(e, x, y)}
+            >
               {userInputs[y][x] === 10 && (
                 <div
-                  className={styles.sampleCell}
-                  style={{ backgroundPosition: userInputs[y][x] * -30 }}
+                  className={styles.iconCell}
+                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
                 />
               )}
-              {userInputs[y][x] === 1 && <div className={styles.openCell} />}
+              {userInputs[y][x] === -1 && <div className={styles.openCell} />}
+              {userInputs[y][x] === 9 && (
+                <div
+                  className={styles.iconCell}
+                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
+                />
+              )}
             </div>
           )),
         )}

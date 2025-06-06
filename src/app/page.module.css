@@ -9,39 +9,43 @@
 }
 
 .board {
-  display: flex;
-  flex-wrap: wrap;
-  width: 278px;
-  height: 278px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(9, 30px);
+  width: 288px;
+  height: 288px;
   padding: 5px;
   background-color: #c0c0c0;
-  border: 4px inset #aaa;
-  border-color: #808080 #fff #fff #808080;
+  border-top: 3px solid #808080;
+  border-right: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+  border-left: 3px solid #808080;
 }
 
 .cell {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 30px;
   height: 30px;
-  background: url('~/src/assets/images/icons.png') no-repeat;
-  background-color: #c0c0c0;
-  border: 4px outset #aaa;
-  border-color: #fff #808080 #808080 #fff;
+  background-color: #838282;
+  border-top: 3px solid #fff;
+  border-right: 3px solid #808080;
+  border-bottom: 3px solid #808080;
+  border-left: 3px solid #fff;
 }
 
 .openCell {
   box-sizing: border-box;
   width: 24px;
   height: 24px;
-  background-color: #424040;
+  background-color: #b0aaaa;
   border: 1px solid #323232;
 }
 
-.sampleCell {
-  width: 28px;
-  height: 28px;
+.iconCell {
+  width: 30px;
+  height: 30px;
   background: url('~/src/assets/images/icons.png') no-repeat;
-  border: 1px solid #000;
 }
