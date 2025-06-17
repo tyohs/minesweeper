@@ -50,6 +50,7 @@ export default function Home() {
   const [bombMap, setBombMap] = useState(board);
   const [userInputs, setUserInputs] = useState(board);
   const [gameStarted, setGameStarted] = useState(false);
+  const [numberMap, setNumberMap] = useState(board);
   const directions = [
     [-1, 0],
     [-1, 1],
@@ -69,6 +70,7 @@ export default function Home() {
   // const newSamplePoints = structuredClone(samplePoints);
   // newSamplePoints[sampleCounter] += 1;
   // setSamplePoints(newSamplePoints);
+  const calcboard = (userInputs: number[][], bombMap: number[][]) => {};
   const bombRandom = () => {
     let bombCounter = 0;
     const newBombMap = structuredClone(bombMap);
@@ -82,16 +84,41 @@ export default function Home() {
     }
     return newBombMap;
   };
+  const bombCount = (currentBombMap: number[][]) => {
+    for (let y = 0; y < 9; y++) {
+      for (let x = 0; x < 9; x++) {
+        let bombCount = 0;
+        for (const [dy, dx] of directions) {
+          const ry = y + dy;
+          const rx = x + dx;
+          if (
+            currentBombMap[ry] !== undefined &&
+            currentBombMap[ry][rx] !== undefined &&
+            currentBombMap[ry][rx] === 10
+          ) {
+            bombCount++;
+          }
+        }
+        numberMap[y][x] = bombCount;
+      }
+    }
+    return numberMap;
+  };
+  //git hub gemini
+  //calc何に使う？←userinputsとbombmapを 合わせて爆弾を認知する、tsxでの管理
   const clickHandler = (x: number, y: number) => {
     console.log(x, y);
     const newUserInputs = structuredClone(userInputs);
     let currentBombMap = bombMap;
     if (!gameStarted) {
       const generatedBombMap = bombRandom();
+      const generatedNumberMap = bombCount(generatedBombMap);
       setBombMap(generatedBombMap);
       currentBombMap = generatedBombMap;
       setGameStarted(true);
+      setNumberMap(generatedNumberMap);
     }
+
     if (currentBombMap[y][x] === 10) {
       newUserInputs[y][x] = 10;
       console.log('ボム');
@@ -109,10 +136,13 @@ export default function Home() {
     if (newUserInputs[y][x] === 0) {
       newUserInputs[y][x] = 9;
     } else if (newUserInputs[y][x] === 9) {
+      newUserInputs[y][x] = 8;
+    } else if (newUserInputs[y][x] === 8) {
       newUserInputs[y][x] = 0;
     }
     setUserInputs(newUserInputs);
   };
+
   return (
     <div className={styles.container}>
       {/* <div className={styles.sampleCell} style={{ backgroundPosition: sampleCounter * -30 }} /> */}
@@ -131,13 +161,22 @@ export default function Home() {
                   style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
                 />
               )}
-              {userInputs[y][x] === -1 && <div className={styles.openCell} />}
-              {userInputs[y][x] === 9 && (
+              {userInputs[y][x] === -1 && numberMap[y][x] >= 1 ? (
                 <div
                   className={styles.iconCell}
-                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
+                  style={{ backgroundPosition: `${(numberMap[y][x] - 1) * -30}px 0px` }}
                 />
-              )}
+              ) : userInputs[y][x] === -1 ? (
+                <div className={styles.openCell} />
+              ) : null}
+              {/* {userInputs[y][x] === -1 && numberMap[y][x] >= 1 && (
+                <div
+                  className={styles.iconCell}
+                  style={{ backgroundPosition: `${-30 * numberMap[y][x]}px ` }}
+                />
+              )} */}
+              {userInputs[y][x] === 9 && <div className={styles.iconFlag} />}
+              {userInputs[y][x] === 8 && <div className={styles.iconQuestion} />}
             </div>
           )),
         )}

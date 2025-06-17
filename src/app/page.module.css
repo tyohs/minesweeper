@@ -45,7 +45,34 @@
 }
 
 .iconCell {
+  box-sizing: border-box;
   width: 30px;
   height: 30px;
   background: url('~/src/assets/images/icons.png') no-repeat;
+  background-color: #b0aaaa;
+  border: 1px solid #323232;
+}
+
+.iconFlag {
+  width: 100%;
+  height: 100%;
+  background-image: url('/icons.png');
+  background-repeat: no-repeat;
+
+  /* icons.png の中の「旗」の画像位置を指定します。
+     あなたのスプライトシートでおそらく10番目(インデックス9)あたりなので、-30px * 9 = -270px となります */
+  background-position: -270px 0;
+}
+
+.iconQuestion {
+  width: 100%;
+  height: 100%;
+  background-image: url('/icons.png');
+  background-repeat: no-repeat;
+
+  /* icons.png の中の「？」の画像位置を指定します。
+     これはあなたのスプライトシートには無いため、一時的に旗と同じ画像を指定しています。
+     もし「？」用の画像があれば、その位置を指定してください。
+     ここでは仮に、旗の隣(インデックス8)にあると仮定します。 */
+  background-position: -240px 0;
 }
