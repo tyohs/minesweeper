@@ -123,6 +123,9 @@ export default function Home() {
   //git hub gemini
   //calc何に使う？←userinputsとbombmapを 合わせて爆弾を認知する、tsxでの管理
   const clickHandler = (x: number, y: number) => {
+    if (userInputs[y][x] !== 0) {
+      return;
+    }
     console.log(x, y);
     const newUserInputs = structuredClone(userInputs);
     let currentBombMap = bombMap;
@@ -134,7 +137,6 @@ export default function Home() {
       setGameStarted(true);
       setNumberMap(generatedNumberMap);
     }
-
     if (currentBombMap[y][x] === 10) {
       newUserInputs[y][x] = 10;
       console.log('ボム');
@@ -187,13 +189,13 @@ export default function Home() {
               ) : null}
               {userInputs[y][x] === 9 && (
                 <div
-                  className={styles.iconFlagAndQuestion}
+                  className={styles.iconFlag}
                   style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
                 />
               )}
               {userInputs[y][x] === 8 && (
                 <div
-                  className={styles.iconFlagAndQuestion}
+                  className={styles.iconFlag}
                   style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
                 />
               )}
