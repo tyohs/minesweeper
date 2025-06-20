@@ -70,7 +70,23 @@ export default function Home() {
   // const newSamplePoints = structuredClone(samplePoints);
   // newSamplePoints[sampleCounter] += 1;
   // setSamplePoints(newSamplePoints);
-  const calcboard = (userInputs: number[][], bombMap: number[][]) => {};
+  const calcBoard = (userInputs: number[][], bombMap: number[][]) => {
+    const newcalc = structuredClone(board);
+    const h = userInputs.length;
+    const w = userInputs[0].length;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (userInputs[y][x] === -1) {
+          newcalc[y][x] = bombMap[y][x] - 1;
+        } else {
+          newcalc[y][x] = userInputs[y][x];
+        }
+      }
+    }
+    console.log(bombMap);
+    console.log(newcalc);
+    return newcalc;
+  };
   const bombRandom = () => {
     let bombCounter = 0;
     const newBombMap = structuredClone(bombMap);
@@ -169,14 +185,18 @@ export default function Home() {
               ) : userInputs[y][x] === -1 ? (
                 <div className={styles.openCell} />
               ) : null}
-              {/* {userInputs[y][x] === -1 && numberMap[y][x] >= 1 && (
+              {userInputs[y][x] === 9 && (
                 <div
-                  className={styles.iconCell}
-                  style={{ backgroundPosition: `${-30 * numberMap[y][x]}px ` }}
+                  className={styles.iconFlagAndQuestion}
+                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
                 />
-              )} */}
-              {userInputs[y][x] === 9 && <div className={styles.iconFlag} />}
-              {userInputs[y][x] === 8 && <div className={styles.iconQuestion} />}
+              )}
+              {userInputs[y][x] === 8 && (
+                <div
+                  className={styles.iconFlagAndQuestion}
+                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
+                />
+              )}
             </div>
           )),
         )}
