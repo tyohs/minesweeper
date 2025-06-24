@@ -70,24 +70,54 @@ export default function Home() {
   // const newSamplePoints = structuredClone(samplePoints);
   // newSamplePoints[sampleCounter] += 1;
   // setSamplePoints(newSamplePoints);
-  const calcBoard = (userInputs: number[][], bombMap: number[][]) => {
-    const newcalc = structuredClone(board);
-    const h = userInputs.length;
-    const w = userInputs[0].length;
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (userInputs[y][x] === -1) {
-          newcalc[y][x] = bombMap[y][x] - 1;
-        } else {
-          newcalc[y][x] = userInputs[y][x];
+  const calcBoard = (userInputs: number[][], bombMap: number[][]): number[][] => {
+    const height = userInputs.length;
+    const width = userInputs[0]?.length || 0;
+    // 表示用の新しい盤面を作成
+    const displayBoard: number[][] = Array.from({ length: height }, () =>
+      Array.from({ length: width }, () => 0),
+    );
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const userInput = userInputs[y][x];
+        const isBomb = bombMap[y][x] === 10; // 爆弾の値はあなたのコードに合わせて10とします
+
+        if (userInput === 0) {
+          // 未開封
+          displayBoard[y][x] = 0;
+        } else if (userInput === 9 || userInput === 8) {
+          // 旗または「？」
+          displayBoard[y][x] = userInput;
+        } else if (userInput === 10) {
+          // 踏んでしまった爆弾
+          displayBoard[y][x] = 10;
+        } else if (userInput === -1) {
+          // 開封済みの安全なマス
+          if (isBomb) {
+            // このルートは通常通りませんが、安全のために
+            displayBoard[y][x] = 11; // 別の爆弾コード
+          } else {
+            // ★★★ ここで、その場で周囲の爆弾の数を数える ★★★
+            let bombCount = 0;
+            for (const [dy, dx] of directions) {
+              if (bombMap[y + dy]?.[x + dx] === 10) {
+                bombCount++;
+              }
+            }
+            // 計算結果を表示用の値としてセット (0の場合は開封済みを示す-1)
+            displayBoard[y][x] = bombCount > 0 ? bombCount : -1;
+          }
         }
       }
     }
-    console.log(bombMap);
-    console.log(newcalc);
-    return newcalc;
+    // ゲームオーバー時の処理などもここに追加できます
+
+    return displayBoard;
   };
+  const boardForDisplay = calcBoard(userInputs, bombMap);
   const bombRandom = () => {
+    numberMap;
     let bombCounter = 0;
     const newBombMap = structuredClone(bombMap);
     while (bombCounter < 10) {
@@ -100,26 +130,6 @@ export default function Home() {
     }
     return newBombMap;
   };
-  const bombCount = (currentBombMap: number[][]) => {
-    for (let y = 0; y < 9; y++) {
-      for (let x = 0; x < 9; x++) {
-        let bombCount = 0;
-        for (const [dy, dx] of directions) {
-          const ry = y + dy;
-          const rx = x + dx;
-          if (
-            currentBombMap[ry] !== undefined &&
-            currentBombMap[ry][rx] !== undefined &&
-            currentBombMap[ry][rx] === 10
-          ) {
-            bombCount++;
-          }
-        }
-        numberMap[y][x] = bombCount;
-      }
-    }
-    return numberMap;
-  };
   //git hub gemini
   //calc何に使う？←userinputsとbombmapを 合わせて爆弾を認知する、tsxでの管理
   const clickHandler = (x: number, y: number) => {
@@ -131,11 +141,9 @@ export default function Home() {
     let currentBombMap = bombMap;
     if (!gameStarted) {
       const generatedBombMap = bombRandom();
-      const generatedNumberMap = bombCount(generatedBombMap);
       setBombMap(generatedBombMap);
       currentBombMap = generatedBombMap;
       setGameStarted(true);
-      setNumberMap(generatedNumberMap);
     }
     if (currentBombMap[y][x] === 10) {
       newUserInputs[y][x] = 10;
@@ -160,47 +168,59 @@ export default function Home() {
     }
     setUserInputs(newUserInputs);
   };
-
   return (
     <div className={styles.container}>
-      {/* <div className={styles.sampleCell} style={{ backgroundPosition: sampleCounter * -30 }} /> */}
       <div className={styles.board}>
-        {board.map((row, y) =>
-          row.map((value, x) => (
-            <div
-              className={styles.cell}
-              key={`${x}-${y}`}
-              onClick={() => clickHandler(x, y)}
-              onContextMenu={(e) => handleRightClick(e, x, y)}
-            >
-              {userInputs[y][x] === 10 && (
+        {/* 表示用の盤面データ(boardForDisplay)を元にmapを実行 */}
+        {boardForDisplay.map((row, y) =>
+          row.map((displayCode, x) => {
+            // このセルに適用するCSSクラスを格納する配列
+            const classNames = [styles.cell]; // 全てのセルに基本の .cell を適用
+
+            // displayCodeの値に応じて、追加のクラスを決定する
+
+            // --- セルの見た目を決定 ---
+            if (
+              displayCode === -1 ||
+              (displayCode >= 1 && displayCode <= 8) ||
+              displayCode === 11
+            ) {
+              // 開封済みのマス（空、数字、爆弾）
+              classNames.push(styles.opened);
+            }
+
+            // --- セルの中身（アイコン）を決定 ---
+            if (displayCode >= 1 && displayCode <= 8) {
+              // 数字アイコンの場合
+              classNames.push(styles[`iconNumber${displayCode}`]); // 例: styles.iconNumber1
+            } else if (displayCode === 9) {
+              // 「？」アイコンの場合
+              classNames.push(styles.iconQuestion);
+            } else if (displayCode === 10) {
+              // 旗アイコンの場合
+              classNames.push(styles.iconFlag);
+            } else if (displayCode === 11) {
+              // 爆弾アイコンの場合
+              classNames.push(styles.iconBomb);
+            }
+            // displayCodeが0（未開封）や-1（空の開封済みマス）の場合は、アイコン用のクラスは追加されない
+
+            // --- クリックイベントの有無を決定 ---
+            // 未開封、旗、？ の状態のセルだけクリックイベントを付与する
+            if (displayCode === 0 || displayCode === 9 || displayCode === 10) {
+              return (
                 <div
-                  className={styles.iconCell}
-                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
+                  key={`${x}-${y}`}
+                  className={classNames.join(' ')}
+                  onClick={() => clickHandler(x, y)}
+                  onContextMenu={(e) => handleRightClick(e, x, y)}
                 />
-              )}
-              {userInputs[y][x] === -1 && numberMap[y][x] >= 1 ? (
-                <div
-                  className={styles.iconCell}
-                  style={{ backgroundPosition: `${(numberMap[y][x] - 1) * -30}px 0px` }}
-                />
-              ) : userInputs[y][x] === -1 ? (
-                <div className={styles.openCell} />
-              ) : null}
-              {userInputs[y][x] === 9 && (
-                <div
-                  className={styles.iconFlag}
-                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
-                />
-              )}
-              {userInputs[y][x] === 8 && (
-                <div
-                  className={styles.iconFlag}
-                  style={{ backgroundPosition: `${-30 * userInputs[y][x]}px ` }}
-                />
-              )}
-            </div>
-          )),
+              );
+            }
+
+            // それ以外（開封済みのセル）はクリックイベントなし
+            return <div key={`${x}-${y}`} className={classNames.join(' ')} />;
+          }),
         )}
       </div>
     </div>
