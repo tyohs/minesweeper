@@ -1,250 +1,163 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { Board, Cell, Position } from '../lib/minesweeper';
+import {
+  advanceTimer,
+  countFlags,
+  createBoard,
+  isCleared,
+  placeMines,
+  revealAllMines,
+  revealCell,
+  toggleMark,
+} from '../lib/minesweeper';
 import styles from './page.module.css';
-const directions = [
-  [-1, 0],
-  [-1, 1],
-  [0, 1],
-  [1, 1],
-  [1, 0],
-  [1, -1],
-  [0, -1],
-  [-1, -1],
-];
-const createEmptyBoard = (rows: number, cols: number): number[][] => {
-  return Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0));
-};
-const generateBombMap = (
-  rows: number,
-  cols: number,
-  bombCount: number,
-  firstClick: { y: number; x: number },
-): number[][] => {
-  const newBombMap = createEmptyBoard(rows, cols);
-  let bombsPlaced = 0;
-  while (bombsPlaced < bombCount) {
-    const y = Math.floor(Math.random() * rows);
-    const x = Math.floor(Math.random() * cols);
-    if ((y === firstClick.y && x === firstClick.x) || newBombMap[y][x] !== 0) {
-      continue;
-    }
-    newBombMap[y][x] = 11;
-    bombsPlaced++;
+
+const ROWS = 9;
+const COLUMNS = 9;
+const MINE_COUNT = 10;
+
+type GameStatus = 'waiting' | 'playing' | 'gameOver' | 'clear';
+
+function getCellLabel(cell: Cell, { x, y }: Position): string {
+  const location = `${y + 1}行${x + 1}列`;
+  if (cell.state === 'flagged') return `${location}、旗`;
+  if (cell.state === 'questioned') return `${location}、不明`;
+  if (cell.state === 'hidden') return `${location}、閉じたマス`;
+  if (cell.isMine) return `${location}、地雷`;
+  if (cell.adjacentMines === 0) return `${location}、周囲に地雷なし`;
+  return `${location}、周囲の地雷${cell.adjacentMines}個`;
+}
+
+function getStatusMessage(status: GameStatus): string {
+  switch (status) {
+    case 'playing':
+      return 'ゲーム中です。右クリックで旗と疑問符を切り替えられます。';
+    case 'gameOver':
+      return 'ゲームオーバー。顔ボタンで再挑戦できます。';
+    case 'clear':
+      return 'ゲームクリア！おめでとうございます。';
+    default:
+      return '最初のマスを選んでゲームを始めてください。';
   }
-  return newBombMap;
-};
-const calcBoard = (userInputBoard: number[][], bombMap: number[][]): number[][] => {
-  const height = userInputBoard.length;
-  const width = userInputBoard[0]?.length || 0;
-  const displayBoard: number[][] = Array.from({ length: height }, () =>
-    Array.from({ length: width }, () => 0),
-  );
+}
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const userInput = userInputBoard[y][x];
-      const isBomb = bombMap[y][x] === 11;
-      if (userInput === 0 || userInput === 9 || userInput === 8) {
-        displayBoard[y][x] = userInput;
-        continue;
-      }
-      if (userInput === 11) {
-        displayBoard[y][x] = 11;
-        continue;
-      }
-      if (userInput === -1) {
-        if (isBomb) {
-          displayBoard[y][x] = 11;
-        } else {
-          let adjacentBombs = 0;
-          for (const [dy, dx] of directions) {
-            if (bombMap[y + dy]?.[x + dx] === 11) {
-              adjacentBombs++;
-            }
-          }
-          displayBoard[y][x] = adjacentBombs > 0 ? adjacentBombs : -1;
-        }
-      }
-    }
-  }
-  return displayBoard;
-};
-const openSafeCells = (
-  y: number,
-  x: number,
-  bombMap: number[][],
-  currentInputs: number[][],
-): number[][] => {
-  const newUserInputs = structuredClone(currentInputs);
-  const height = bombMap.length;
-  const width = bombMap[0]?.length || 0;
-
-  const recursiveOpen = (cy: number, cx: number) => {
-    if (cy < 0 || cy >= height || cx < 0 || cx >= width || newUserInputs[cy][cx] === -1) {
-      return;
-    }
-    if (bombMap[cy][cx] === 11) {
-      return;
-    }
-    newUserInputs[cy][cx] = -1;
-    let adjacentBombs = 0;
-    for (const [dy, dx] of directions) {
-      if (bombMap[cy + dy]?.[cx + dx] === 11) {
-        adjacentBombs++;
-      }
-    }
-    if (adjacentBombs === 0) {
-      for (const [dy, dx] of directions) {
-        recursiveOpen(cy + dy, cx + dx);
-      }
-    }
-  };
-
-  recursiveOpen(y, x);
-  return newUserInputs;
-};
 export default function Home() {
-  const ROWS = 9;
-  const COLS = 9;
-  const BOMB_COUNT = 10;
-
-  const [userInputs, setUserInputs] = useState(() => createEmptyBoard(ROWS, COLS));
-  const [bombMap, setBombMap] = useState(() => createEmptyBoard(ROWS, COLS));
-  const [gameStatus, setGameStatus] = useState<'waiting' | 'playing' | 'gameOver' | 'clear'>(
-    'waiting',
-  );
+  const [board, setBoard] = useState<Board>(() => createBoard(ROWS, COLUMNS));
+  const [status, setStatus] = useState<GameStatus>('waiting');
   const [time, setTime] = useState(0);
+
   useEffect(() => {
-    if (gameStatus !== 'playing') {
-      return;
-    }
-    const isGameInProgress = userInputs.some((row, y) =>
-      row.some((cell, x) => bombMap[y][x] !== 11 && cell === 0),
-    );
-    if (!isGameInProgress) {
-      setGameStatus('clear');
-      window.alert('ゲームクリア！おめでとうございます！');
-    }
-  }, [userInputs, bombMap, gameStatus]);
-  const boardForDisplay = useMemo(() => {
-    return calcBoard(userInputs, bombMap);
-  }, [userInputs, bombMap]);
+    if (status !== 'playing') return;
+
+    const timer = window.setInterval(() => {
+      setTime(advanceTimer);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [status]);
+
   const resetGame = () => {
-    setUserInputs(createEmptyBoard(ROWS, COLS));
-    setBombMap(createEmptyBoard(ROWS, COLS));
-    setGameStatus('waiting');
+    setBoard(createBoard(ROWS, COLUMNS));
+    setStatus('waiting');
     setTime(0);
   };
-  const getFaceStyle = () => {
-    switch (gameStatus) {
-      case 'gameOver':
-        return { backgroundPosition: '-390px 0' };
-      case 'clear':
-        return { backgroundPosition: '-360px 0' };
-      default:
-        return { backgroundPosition: '-330px 0' };
-    }
-  };
 
-  const clickHandler = (x: number, y: number) => {
-    if (gameStatus === 'gameOver' || gameStatus === 'clear' || userInputs[y][x] !== 0) {
+  const handleReveal = (position: Position) => {
+    if (status === 'gameOver' || status === 'clear') return;
+
+    const preparedBoard = status === 'waiting' ? placeMines(board, MINE_COUNT, position) : board;
+    const result = revealCell(preparedBoard, position);
+
+    if (result.hitMine) {
+      setBoard(revealAllMines(result.board));
+      setStatus('gameOver');
       return;
     }
 
-    let currentBombMap = bombMap;
-    if (gameStatus === 'waiting') {
-      const newBombMap = generateBombMap(ROWS, COLS, BOMB_COUNT, { y, x });
-      setBombMap(newBombMap);
-      setGameStatus('playing');
-      currentBombMap = newBombMap;
-    }
-
-    if (currentBombMap[y][x] === 11) {
-      const newUserInputs = structuredClone(userInputs);
-      newUserInputs[y][x] = 11;
-      setUserInputs(newUserInputs);
-      setGameStatus('gameOver');
-      console.log('ボム！ ゲームオーバー');
-      window.alert('ゲームオーバー');
-      return;
-    }
-
-    const finalUserInputs = openSafeCells(y, x, currentBombMap, userInputs);
-    setUserInputs(finalUserInputs);
+    setBoard(result.board);
+    setStatus(isCleared(result.board) ? 'clear' : 'playing');
   };
 
-  const handleRightClick = (e: React.MouseEvent, x: number, y: number) => {
-    e.preventDefault();
-    if (
-      gameStatus === 'gameOver' ||
-      gameStatus === 'clear' ||
-      (userInputs[y][x] !== 0 && userInputs[y][x] !== 9 && userInputs[y][x] !== 8)
-    ) {
-      return;
-    }
-    const newUserInputs = structuredClone(userInputs);
-    newUserInputs[y][x] = newUserInputs[y][x] === 0 ? 9 : newUserInputs[y][x] === 9 ? 8 : 0;
-    setUserInputs(newUserInputs);
+  const handleMark = (event: React.MouseEvent<HTMLButtonElement>, position: Position) => {
+    event.preventDefault();
+    if (status === 'gameOver' || status === 'clear') return;
+    setBoard((current) => toggleMark(current, position));
   };
-  const flagCount = userInputs.flat().filter((cell) => cell === 9).length;
-  const remainingBombs = BOMB_COUNT - flagCount;
+
+  const remainingMines = Math.max(0, MINE_COUNT - countFlags(board));
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        {/* ↓ 追加：残り爆弾数の表示 */}
-        <div className={styles.digitalDisplay}>{String(remainingBombs).padStart(3, '0')}</div>
+    <main className={styles.container}>
+      <section className={styles.game} aria-label="マインスイーパー">
+        <header className={styles.header}>
+          <output className={styles.digitalDisplay} aria-label={`残り地雷${remainingMines}個`}>
+            {String(remainingMines).padStart(3, '0')}
+          </output>
 
-        <button className={styles.resetButton} onClick={resetGame}>
-          <div className={styles.faceIcon} style={getFaceStyle()} />
-        </button>
+          <button
+            aria-label="ゲームをリセット"
+            className={styles.resetButton}
+            data-status={status}
+            onClick={resetGame}
+            type="button"
+          >
+            <span className={styles.faceIcon} aria-hidden="true" />
+          </button>
 
-        {/* ↓ 追加：時間の表示 */}
-        <div className={styles.digitalDisplay}>{String(time).padStart(3, '0')}</div>
-      </div>
-      <div className={styles.board}>
-        {boardForDisplay.map((row, y) =>
-          row.map((displayCode, x) => {
-            if (displayCode === 0 || displayCode === 8 || displayCode === 9) {
+          <output className={styles.digitalDisplay} aria-label={`経過時間${time}秒`}>
+            {String(time).padStart(3, '0')}
+          </output>
+        </header>
+
+        <div className={styles.board} role="group" aria-label="9行9列の盤面">
+          {board.map((row, y) =>
+            row.map((cell, x) => {
+              const position = { x, y };
+              const isRevealed = cell.state === 'revealed';
+              const iconPosition = cell.isMine
+                ? '-300px 0'
+                : cell.adjacentMines > 0
+                  ? `${(cell.adjacentMines - 1) * -30}px 0`
+                  : undefined;
+
               return (
-                <div
+                <button
+                  aria-label={getCellLabel(cell, position)}
+                  className={isRevealed ? styles.openCell : styles.cell}
+                  disabled={isRevealed}
                   key={`${x}-${y}`}
-                  className={styles.cell}
-                  onClick={() => clickHandler(x, y)}
-                  onContextMenu={(e) => handleRightClick(e, x, y)}
+                  onClick={() => handleReveal(position)}
+                  onContextMenu={(event) => handleMark(event, position)}
+                  type="button"
                 >
-                  {(displayCode === 9 || displayCode === 8) && (
-                    <div
+                  {isRevealed && iconPosition ? (
+                    <span
+                      aria-hidden="true"
+                      className={styles.iconCell}
+                      style={{ backgroundPosition: iconPosition }}
+                    />
+                  ) : null}
+                  {cell.state === 'flagged' || cell.state === 'questioned' ? (
+                    <span
+                      aria-hidden="true"
                       className={styles.iconFlagAndQuestion}
                       style={{
-                        backgroundPosition: displayCode === 9 ? '-270px 0' : '-240px 0',
+                        backgroundPosition: cell.state === 'flagged' ? '-270px 0' : '-240px 0',
                       }}
                     />
-                  )}
-                </div>
+                  ) : null}
+                </button>
               );
-            }
+            }),
+          )}
+        </div>
+      </section>
 
-            if (displayCode === -1) {
-              return <div key={`${x}-${y}`} className={styles.openCell} />;
-            }
-            return (
-              <div key={`${x}-${y}`} className={styles.openCell}>
-                <div
-                  className={styles.iconCell}
-                  style={{
-                    backgroundPosition:
-                      displayCode >= 1 && displayCode <= 8
-                        ? `${(displayCode - 1) * -30}px 0`
-                        : '-300px 0',
-                  }}
-                />
-              </div>
-            );
-          }),
-        )}
-      </div>
-    </div>
+      <p className={styles.status} aria-live="polite">
+        {getStatusMessage(status)}
+      </p>
+    </main>
   );
 }
