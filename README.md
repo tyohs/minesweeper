@@ -1,32 +1,37 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Minesweeper
 
-## Getting Started
+クラシックな9×9マインスイーパーを、ReactとTypeScriptで実装した個人開発です。
 
-First, run the development server:
+## Features
+
+- 最初に選んだマスには地雷を置かない
+- 周囲に地雷がない領域を自動で展開
+- 右クリックで旗・疑問符・未設定を切り替え
+- 残り地雷数、経過時間、勝敗を表示
+- キーボード操作とスクリーンリーダー向けラベルに対応
+
+## Design
+
+ゲームルールは`src/lib/minesweeper.ts`の純粋関数へ分離しています。画面は盤面とゲーム状態を保持しますが、地雷配置、マスの展開、マーク、クリア判定はUIに依存しません。この分離により、ランダムな地雷配置も乱数を注入して再現可能なテストにしています。
+
+## Setup
 
 ```bash
+npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Validation
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+テストでは、地雷数と初手の安全性、空白領域の展開、マークした安全マスによる誤クリア防止、勝敗、マーク切り替え、タイマー上限を確認しています。
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## What I learned
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+最初の実装では盤面を数値で管理していたため、表示状態とゲームルールが混ざり、旗を置いただけでクリアになる不具合がありました。セルを型付きデータへ変更し、ルールを純粋関数へ分離することで、仕様をテストとして表現できる構成へ改善しました。
