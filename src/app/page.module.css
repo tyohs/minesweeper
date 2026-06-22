@@ -8,6 +8,15 @@
   background-color: #c0c0c0;
 }
 
+.game {
+  padding: 10px;
+  background: #c0c0c0;
+  border-top: 3px solid #fff;
+  border-right: 3px solid #7b7b7b;
+  border-bottom: 3px solid #7b7b7b;
+  border-left: 3px solid #fff;
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -59,6 +68,15 @@
   height: 28px;
   background-image: url('~/src/assets/images/icons.png');
   background-repeat: no-repeat;
+  background-position: -330px 0;
+}
+
+.resetButton[data-status='gameOver'] .faceIcon {
+  background-position: -390px 0;
+}
+
+.resetButton[data-status='clear'] .faceIcon {
+  background-position: -360px 0;
 }
 
 .board {
@@ -80,11 +98,21 @@
   justify-content: center;
   width: 30px;
   height: 30px;
+  padding: 0;
+  cursor: pointer;
   background-color: #c0c0c0;
   border-top: 3px solid #fff;
   border-right: 3px solid #7b7b7b;
   border-bottom: 3px solid #7b7b7b;
   border-left: 3px solid #fff;
+}
+
+.cell:focus-visible,
+.resetButton:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid #005fcc;
+  outline-offset: 1px;
 }
 
 .openCell {
@@ -94,7 +122,14 @@
   justify-content: center;
   width: 30px;
   height: 30px;
+  padding: 0;
+  color: inherit;
+  background: #c0c0c0;
   border: 1px solid #7b7b7b;
+}
+
+.openCell:disabled {
+  opacity: 1;
 }
 
 .iconCell {
@@ -109,4 +144,24 @@
   height: 28px;
   background-image: url('~/src/assets/images/icons.png');
   background-repeat: no-repeat;
+}
+
+.status {
+  max-width: 300px;
+  min-height: 3rem;
+  margin: 16px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #111;
+  text-align: center;
+}
+
+@media (width <= 360px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .game {
+    transform: scale(0.92);
+  }
 }
